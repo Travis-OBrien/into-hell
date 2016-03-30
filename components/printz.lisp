@@ -1,0 +1,12 @@
+(in-package :components)
+
+(def-class printz
+    :slots ((statement ""))
+    :constructor (lambda (statement)
+		   (set-slots printz :statement statement)))
+
+(ces/entity:def-system :printz printz
+  ()
+  (print statement))
+
+(export-all-symbols-except nil)
