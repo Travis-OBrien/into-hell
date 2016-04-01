@@ -20,12 +20,12 @@
 	   ;   the viewport and clip must have the same dimensions to avoid
 	   ;   any image warping. the viewport will then dictate where to
 	   ;   draw the image onto the screen.
-	   (viewport (utilities:new-struct rect ((x 0) (y 0) (w 128) (h 128))))
-	   (clip (utilities:new-struct rect ((x 160) (y 16) (w 16) (h 16)))))
+	   (viewport (new-struct rect ((x 0) (y 0) (w 128) (h 128))))
+	   (clip (new-struct rect ((x 160) (y 16) (w 16) (h 16)))))
 	   
     (render-clear renderer)
     ;testing viewports
-    (sdl:sdl-rendersetviewport renderer viewport)
+    (sdl-rendersetviewport renderer viewport)
     ;global sample texture for testing
     (sdl-rendercopy renderer
 		    (:texture scene)
