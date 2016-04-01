@@ -3,9 +3,9 @@
   :description "Describe into-hell here"
   :author "Your Name <your.name@example.com>"
   :license "Specify license here"
-  :depends-on (#:utilities
+  :depends-on (:utilities
                #:cffi
-	       #:sdl-game
+	       :sdl-game
 	       :ces
 	       )
   :serial t

@@ -1,6 +1,6 @@
 ;;;; into-hell.lisp
 
-(in-package #:into-hell)
+(in-package :into-hell)
 
 ;;; "into-hell" goes here. Hacks and glory await!
 
@@ -41,7 +41,6 @@
 (defun start
     ()
   (sdl:init)
-  (break)
   (let* ((scene (ces/da:scene)))
     (set-slots scene
 	       :running? t
@@ -63,31 +62,36 @@
 
     (set-slots scene
 	       :texture (sdl:load-img "C:/sprite_sheet.png" (:renderer scene))
-	       :ani-obj (game-utilities/animation:animation :fps 4
-								  :sprite-coordinates '(((x 160) (y 0) (w 16) (h 16))
-											((x 176) (y 0) (w 16) (h 16))
-											((x 192) (y 0) (w 16) (h 16))
-											((x 208) (y 0) (w 16) (h 16)))
-								  :texture (:texture scene)))
+	       :ani-obj (game-utilities/animation:animation
+			 
+			 :fps 4
+			 :sprite-coordinates '(((x 160) (y 0) (w 16) (h 16))
+					       ((x 176) (y 0) (w 16) (h 16))
+					       ((x 192) (y 0) (w 16) (h 16))
+					       ((x 208) (y 0) (w 16) (h 16)))
+			 :texture (:texture scene)))
 
+    (print "animation created")
+    
     ;;;;
 
     (set-slots scene :asset-manager
 	       (game-utilities/asset-manager:asset-manager
 		:all-images '("sprite_sheet")
 		:all-audio  '()
-		:renderer   (:renderer scene)))
-
-    ;;;;IMPORTANT: this may no longer be working due to switching packages
-    ;;;;for the :printz component. infact, the entire workflow may be broken.
-    ;;;;LOOK INTO THIS!!!!
+		:renderer   (:renderer scene)
+		:animation-maps (list {
+				  :name => :human-run-cycle,
+				  :fps => 4,
+				  :sprite-coordinates => '(((x 160) (y 0) (w 16) (h 16))
+							   ((x 176) (y 0) (w 16) (h 16))
+							   ((x 192) (y 0) (w 16) (h 16))
+							   ((x 208) (y 0) (w 16) (h 16))),
+				  :texture => "sprite_sheet"})))
+    
     (ces/da:attach-systems scene :printz)
-    (break)
     (ces/da:attach-entities scene (entities:player :statement "hello!"))
-    (break)
-    ;test update
-    ;(ces/da:update scene)
-    ;(print scene)
+    ;(ces/da:attach-entities scene (entities:player :statement "kek!"))
 
     (game-utilities/game-utilities:start scene)))
 
