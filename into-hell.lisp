@@ -20,20 +20,34 @@
 	   ;   the viewport and clip must have the same dimensions to avoid
 	   ;   any image warping. the viewport will then dictate where to
 	   ;   draw the image onto the screen.
-	   (viewport (new-struct rect ((x 0) (y 0) (w 128) (h 128))))
-	   (clip (new-struct rect ((x 160) (y 16) (w 16) (h 16)))))
+	   (viewport (new-rect 0 0 128 128))
+	   (clip (new-rect 160 0 16 16)))
 	   
     (render-clear renderer)
     ;testing viewports
     (sdl-rendersetviewport renderer viewport)
-    ;global sample texture for testing
-    (sdl-rendercopy renderer
-		    (:texture scene)
-		    ;updating the animation needs be done within the update loop.
-		    ;the fn 'update-method' probly needs to be refactored now.
-		    (game-utilities/animation:update-animation (:ani-obj scene)) 
-		    ;clip
-		    viewport)
+    ;first iteration grabs the render-order map and looks up an index wich returns an array.
+    (loop
+       for index from 1 to 5;(length-of (:render-order scene))
+       do
+	 ;second iteration iterates across the array which will grab entities to render.
+	 (progn
+	   (loop
+	      for entity across (gethash index (:render-order scene))
+	      do (progn
+		   
+		   (print "printing texture start...")
+		   (print (gethash :sprite_sheet (:images (:asset-manager scene))))
+		   (print "printing texture end...")
+		   (sdl-rendercopy renderer
+				   (gethash :sprite_sheet (:images (:asset-manager scene)))
+				   
+				   clip
+					;entity goes here
+					;()
+				   
+				   viewport)))))
+    
     (render-present renderer)
     ))
 
@@ -57,23 +71,7 @@
     ;set renderer draw color
     (sdl:set-render-draw-color (:renderer scene) 0 0 0 255)
     ;init image : TODO : this should include multiple flags for all types of images.
-
     (sdl:img-init 4);I think 4 represents png
-
-    (set-slots scene
-	       :texture (sdl:load-img "C:/sprite_sheet.png" (:renderer scene))
-	       :ani-obj (game-utilities/animation:animation
-			 
-			 :fps 4
-			 :sprite-coordinates '(((x 160) (y 0) (w 16) (h 16))
-					       ((x 176) (y 0) (w 16) (h 16))
-					       ((x 192) (y 0) (w 16) (h 16))
-					       ((x 208) (y 0) (w 16) (h 16)))
-			 :texture (:texture scene)))
-
-    (print "animation created")
-    
-    ;;;;
 
     (set-slots scene :asset-manager
 	       (game-utilities/asset-manager:asset-manager
@@ -83,16 +81,28 @@
 		:animation-maps (list {
 				  :name => :human-run-cycle,
 				  :fps => 4,
-				  :sprite-coordinates => '(((x 160) (y 0) (w 16) (h 16))
-							   ((x 176) (y 0) (w 16) (h 16))
-							   ((x 192) (y 0) (w 16) (h 16))
-							   ((x 208) (y 0) (w 16) (h 16))),
+				  :sprite-coordinates => '((160 0 16 16)
+							   (176 0 16 16)
+							   (192 0 16 16)
+							   (208 0 16 16)),
 				  :texture => "sprite_sheet"})))
-    
-    (ces/da:attach-systems scene :printz)
-    (ces/da:attach-entities scene (entities:player :statement "hello!"))
-    ;(ces/da:attach-entities scene (entities:player :statement "kek!"))
 
-    (game-utilities/game-utilities:start scene)))
+    (ces/da:attach-systems scene :printz :spritesheet-animation)
+    (let* ((player (entities:player :statement "hello!" :animation-name :human-run-cycle)))
+      (ces/da:attach-entities scene player)
+
+      ;;;TODO
+      ;;;somehow all of the vectors from scene->render-order are being converted to simple
+      ;;;vectors which cannot be extended. below is a hack to debug this sht.
+      (let* ((arr (make-array 1 :adjustable t :fill-pointer 0)))
+	(setf (gethash 1 (:render-order scene)) arr)
+	(setf arr (attach (gethash 1 (:render-order scene)) player)))
+
+      (print "GET HASH 1 PRINT")
+      (print (gethash 1 (:render-order scene) player))
+	
+      (game-utilities/game-utilities:start scene))))
 
 (start)
+
+(export-all-symboles-except nil)

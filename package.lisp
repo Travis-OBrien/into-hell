@@ -6,4 +6,4 @@
 (defpackage :components
   (:use #:cl :utilities :sdl))
 (defpackage :entities
-  (:use #:cl :utilities :sdl))
+  (:use #:cl :utilities :sdl :components))

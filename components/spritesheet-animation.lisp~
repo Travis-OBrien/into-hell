@@ -1,0 +1,14 @@
+(in-package :components)
+
+(def-class spritesheet-animation
+    :slots ((animation-name nil))
+    :constructor (lambda (animation-name)
+		   (set-slots spritesheet-animation :animation-name animation-name)))
+
+(ces/entity:def-system :spritesheet-animation spritesheet-animation
+  ((scene ces/da:scene))
+  ;((:animation-name spritesheet-animation) (:animations (:asset-manager scene)))
+  (print "kek shmek")
+  )
+
+(export-all-symbols-except nil)

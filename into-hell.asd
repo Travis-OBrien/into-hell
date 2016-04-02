@@ -12,6 +12,7 @@
   :components ((:file "package")
 	       ;components
 	       (:file "components/printz")
+	       (:file "components/spritesheet-animation")
 	       ;entities
 	       (:file "entities/player")
 	       
