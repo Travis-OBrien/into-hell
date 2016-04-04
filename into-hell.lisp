@@ -20,33 +20,31 @@
 	   ;   the viewport and clip must have the same dimensions to avoid
 	   ;   any image warping. the viewport will then dictate where to
 	   ;   draw the image onto the screen.
-	   (viewport (new-rect 0 0 128 128))
-	   (clip (new-rect 160 0 16 16)))
+	   (viewport (new-rect 0 0 128 128)))
 	   
     (render-clear renderer)
     ;testing viewports
     (sdl-rendersetviewport renderer viewport)
     ;first iteration grabs the render-order map and looks up an index wich returns an array.
     (loop
-       for index from 1 to 5;(length-of (:render-order scene))
+       for render-order across (:render-order scene) ;index from 1 to (length-of (:render-order scene))
        do
 	 ;second iteration iterates across the array which will grab entities to render.
-	 (progn
-	   (loop
-	      for entity across (gethash index (:render-order scene))
-	      do (progn
-		   
-		   (print "printing texture start...")
-		   (print (gethash :sprite_sheet (:images (:asset-manager scene))))
-		   (print "printing texture end...")
-		   (sdl-rendercopy renderer
-				   (gethash :sprite_sheet (:images (:asset-manager scene)))
-				   
-				   clip
-					;entity goes here
-					;()
-				   
-				   viewport)))))
+	 (loop
+	    for entity across render-order;(gethash index (:render-order scene))
+	    do
+	      (sdl-rendercopy renderer
+			      ;texture to sample from.
+			      ;grab the animation's name from the entity object, then look up the animation
+			      ;within the asset-manager to find the texture it uses.
+			      (gethash
+			       (:texture (gethash (:animation-name entity) (:animations (:asset-manager scene))))
+			       (:images (:asset-manager scene)))
+			    
+			      ;entity's sprite coordinate
+			      (:current-frame entity)
+			      
+			      viewport)))
     
     (render-present renderer)
     ))
@@ -73,34 +71,44 @@
     ;init image : TODO : this should include multiple flags for all types of images.
     (sdl:img-init 4);I think 4 represents png
 
+    
     (set-slots scene :asset-manager
 	       (game-utilities/asset-manager:asset-manager
 		:all-images '("sprite_sheet")
 		:all-audio  '()
 		:renderer   (:renderer scene)
-		:animation-maps (list {
-				  :name => :human-run-cycle,
-				  :fps => 4,
-				  :sprite-coordinates => '((160 0 16 16)
-							   (176 0 16 16)
-							   (192 0 16 16)
-							   (208 0 16 16)),
-				  :texture => "sprite_sheet"})))
+		:animations {:human-run-cycle => (game-utilities/asset-manager:animation :fps 8
+								:texture :sprite_sheet
+								:sprite-coordinates (make-vector 1
+												 (new-rect 160 0 16 16)
+												 (new-rect 176 0 16 16)
+												 (new-rect 192 0 16 16)
+												 (new-rect 208 0 16 16))),
+		             :mushroom        => (game-utilities/asset-manager:animation :fps 4
+								:texture :sprite_sheet
+								:sprite-coordinates (make-vector 1
+												 (new-rect 0   96 16 16)
+												 (new-rect 16  96 16 16)
+												 (new-rect 32  96 16 16)
+												 (new-rect 48  96 16 16)
+												 (new-rect 64  96 16 16)
+												 (new-rect 80  96 16 16)
+												 (new-rect 96  96 16 16)
+												 (new-rect 112 96 16 16)))}))
 
-    (ces/da:attach-systems scene :printz :spritesheet-animation)
-    (let* ((player (entities:player :statement "hello!" :animation-name :human-run-cycle)))
+    (ces/da:attach-systems scene :printz :animation)
+    (let* ((player (entities:player :statement "infamous printz" :animation-name :human-run-cycle)))
+
+      ;;;;TODO directly attaching an entity to scene
+      ;;;;this should be handled automatically.
       (ces/da:attach-entities scene player)
 
-      ;;;TODO
-      ;;;somehow all of the vectors from scene->render-order are being converted to simple
-      ;;;vectors which cannot be extended. below is a hack to debug this sht.
-      (let* ((arr (make-array 1 :adjustable t :fill-pointer 0)))
-	(setf (gethash 1 (:render-order scene)) arr)
-	(setf arr (attach (gethash 1 (:render-order scene)) player)))
+      ;;;;TODO directly attaching an entity to :render-order
+      ;;;;this should be handled automatically.
 
-      (print "GET HASH 1 PRINT")
-      (print (gethash 1 (:render-order scene) player))
-	
+      ;(attach (gethash 1 (:render-order scene)) player)
+      (attach (aref (:render-order scene) 0) player)
+
       (game-utilities/game-utilities:start scene))))
 
 (start)
