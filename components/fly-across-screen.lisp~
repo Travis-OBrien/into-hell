@@ -1,0 +1,5 @@
+(in-package :components)
+
+(def-system :fly-across-screen
+    bat scene
+    ())

@@ -13,8 +13,12 @@
 	       ;components
 	       (:file "components/printz")
 	       (:file "components/spritesheet-animation")
+	       (:file "components/position")
+	       (:file "components/fly-across-screen")
 	       ;entities
 	       (:file "entities/player")
+	       (:file "entities/mushroom")
+	       (:file "entities/bat")
 	       
                (:file "into-hell")
 	       ))

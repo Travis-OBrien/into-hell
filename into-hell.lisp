@@ -7,107 +7,131 @@
 ;;;;update
 (defun update
     (scene)
-  (ces/da:update scene))
+  (ces/da::update scene))
 
 ;;;;render
 (defun render
     (scene)
-  (let*   ((renderer (:renderer scene))
-	   ;testing viewport and clipping
-	   ;the dest-rect (viewport) will scale any image to FIT itself.
-	   ;the src-rect (clip) is a rect that specifies what part of the image to render.
-	   ;when using this with sprite sheets,
-	   ;   the viewport and clip must have the same dimensions to avoid
-	   ;   any image warping. the viewport will then dictate where to
-	   ;   draw the image onto the screen.
-	   (viewport (new-rect 0 0 128 128)))
-	   
+  (let* ((renderer (:renderer scene)))
+    (sdl::update-viewport (:window scene))
     (render-clear renderer)
-    ;testing viewports
-    (sdl-rendersetviewport renderer viewport)
-    ;first iteration grabs the render-order map and looks up an index wich returns an array.
+    ;;only render the screen's dimensions.
+    (sdl-rendersetviewport renderer (:viewport (:window scene)))
+    ;;first iteration grabs the render-order map and looks up an index wich returns an array.
     (loop
-       for render-order across (:render-order scene) ;index from 1 to (length-of (:render-order scene))
+       for render-order across (:render-order scene)
        do
-	 ;second iteration iterates across the array which will grab entities to render.
+       ;;second iteration iterates across the array which will grab entities to render.
 	 (loop
-	    for entity across render-order;(gethash index (:render-order scene))
+	    for entity across render-order
 	    do
-	      (sdl-rendercopy renderer
-			      ;texture to sample from.
-			      ;grab the animation's name from the entity object, then look up the animation
-			      ;within the asset-manager to find the texture it uses.
+	      (sdl-rendercopyex renderer
+			      ;;texture to sample from.
+			      ;;grab the animation's name from the entity object, then look up the animation
+			      ;;within the asset-manager to find the texture it uses.
 			      (gethash
 			       (:texture (gethash (:animation-name entity) (:animations (:asset-manager scene))))
 			       (:images (:asset-manager scene)))
 			    
-			      ;entity's sprite coordinate
+			      ;;entity's sprite coordinate
 			      (:current-frame entity)
+			      ;;control the scale
+			      (:viewport entity)
 			      
-			      viewport)))
-    
-    (render-present renderer)
-    ))
+			      (:sprite-angle entity)
+			      (:sprite-pivot-point entity)
+			      (cffi:foreign-enum-value 'sdl-rendererflip (:sprite-flip-dir entity))
+			      )))
+    ;;finally, render everything to the screen.
+    (render-present renderer)))
 
 ;;;;start
 (defun start
     ()
   (sdl:init)
-  (let* ((scene (ces/da:scene)))
-    (set-slots scene
-	       :running? t
-	       :window (sdl:create-window "age of conan ripoff" 640 480)
-	       :update (lambda (scene) (update scene))
-	       :render (lambda (scene) (render scene)))
-    ;(print scene)
-    ;create renderer : hardware-accelerated = 2, vsyn = 4
-
-    ;(set-slots (:window game) :renderer (sdl:sdl-createrenderer (:address (:window game)) 1 (logior 2 4)))
-
-    (set-slots scene :renderer (sdl:sdl-createrenderer (:address (:window scene)) 1 (logior 2 4)))
+  ;(var scene (ces/da:scene))
+  (let* ((scene (make-instance 'ces/da::scene
+			       :running? t
+			       :window (sdl:create-window "age of conan ripoff" 640 480)
+			       :update (lambda (scene) (update scene))
+			       :render (lambda (scene) (render scene))
+			       :event-manager (make-instance 'game-utilities/event-manager::event-manager)
+			       ))) ;;(ces/da:scene)
     
-    ;set renderer draw color
+    ;;create renderer : hardware-accelerated = 2, vsyn = 4
+
+    ;;(set-slots (:window game) :renderer (sdl:sdl-createrenderer (:address (:window game)) 1 (logior 2 4)))
+
+
+    (setf (:renderer scene) (sdl:sdl-createrenderer (:address (:window scene)) 1 (logior 2 4)))
+    
+    ;;set renderer draw color
+
     (sdl:set-render-draw-color (:renderer scene) 0 0 0 255)
-    ;init image : TODO : this should include multiple flags for all types of images.
-    (sdl:img-init 4);I think 4 represents png
+    ;;init image : TODO : this should include multiple flags for all types of images.
+
+    (sdl:img-init 4);;I think 4 represents png
+
 
     
-    (set-slots scene :asset-manager
-	       (game-utilities/asset-manager:asset-manager
-		:all-images '("sprite_sheet")
-		:all-audio  '()
-		:renderer   (:renderer scene)
-		:animations {:human-run-cycle => (game-utilities/asset-manager:animation :fps 8
-								:texture :sprite_sheet
-								:sprite-coordinates (make-vector 1
-												 (new-rect 160 0 16 16)
-												 (new-rect 176 0 16 16)
-												 (new-rect 192 0 16 16)
-												 (new-rect 208 0 16 16))),
-		             :mushroom        => (game-utilities/asset-manager:animation :fps 4
-								:texture :sprite_sheet
-								:sprite-coordinates (make-vector 1
-												 (new-rect 0   96 16 16)
-												 (new-rect 16  96 16 16)
-												 (new-rect 32  96 16 16)
-												 (new-rect 48  96 16 16)
-												 (new-rect 64  96 16 16)
-												 (new-rect 80  96 16 16)
-												 (new-rect 96  96 16 16)
-												 (new-rect 112 96 16 16)))}))
+    (setf
+     (:asset-manager scene)
+     (make-instance 'game-utilities/asset-manager::asset-manager
+      :all-images '("sprite_sheet")
+      :all-audio  '()
+      :renderer   (:renderer scene)
+      :animations {
+      :human-idle => (game-utilities/asset-manager::animation :fps 24
+							      :texture :sprite_sheet
+							      :sprite-coordinates (make-vector (new-rect 160 16 16 16)
+											       (new-rect 176 16 16 16))),
+      :human-run  => (game-utilities/asset-manager::animation :fps 8
+							      :texture :sprite_sheet
+							      :sprite-coordinates (make-vector (new-rect 160 0 16 16)
+											       (new-rect 176 0 16 16)
+											       (new-rect 192 0 16 16)
+											       (new-rect 208 0 16 16))),
+      :mushroom   => (game-utilities/asset-manager::animation :fps 4
+							      :texture :sprite_sheet
+							      :sprite-coordinates (make-vector (new-rect 0   96 16 16)
+											       (new-rect 16  96 16 16)
+											       (new-rect 32  96 16 16)
+											       (new-rect 48  96 16 16)
+											       (new-rect 64  96 16 16)
+											       (new-rect 80  96 16 16)
+											       (new-rect 96  96 16 16)
+											       (new-rect 112 96 16 16))),
+      :bat-fly   => (game-utilities/asset-manager::animation :fps 8
+							     :texture :sprite_sheet
+							     :sprite-coordinates (make-vector (new-rect 160 96 16 16)
+											      (new-rect 176 96 16 16)))}))
 
-    (ces/da:attach-systems scene :printz :animation)
-    (let* ((player (entities:player :statement "infamous printz" :animation-name :human-run-cycle)))
+    (ces/da::attach-systems scene :printz :animation :swap-animation :run :fly-across-screen)
+    (let* ((player (make-instance 'entities::player
+				  :statement "infamous printz"
+				  :animation-name :human-idle
+				  :x 100
+				  :y 100))
+	   (mushroom (make-instance 'entities::mushroom
+				    :statement "MUSHROOM"
+				    :animation-name :mushroom
+				    :x 0
+				    :y 0))
+	   (bat (make-instance 'entities::bat
+			       :animation-name :bat-fly
+			       :x 100 :y 0))
+	   
+	   )
 
       ;;;;TODO directly attaching an entity to scene
       ;;;;this should be handled automatically.
-      (ces/da:attach-entities scene player)
+      (ces/da::attach-entities scene player mushroom bat)
 
       ;;;;TODO directly attaching an entity to :render-order
       ;;;;this should be handled automatically.
 
-      ;(attach (gethash 1 (:render-order scene)) player)
-      (attach (aref (:render-order scene) 0) player)
+      ;;(attach (gethash 1 (:render-order scene)) player)
+      (attach (aref (:render-order scene) 0) player mushroom bat)
 
       (game-utilities/game-utilities:start scene))))
 

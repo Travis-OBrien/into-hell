@@ -1,0 +1,9 @@
+(in-package :components)
+
+(def-class viewport
+    :slots ((viewport (sdl::new-rect 0 0 128 128))))
+
+(defmethod initialize-instance :after
+    ((viewport viewport) &key x y)
+  (sdl::rect-set-x (:viewport viewport) x)
+  (sdl::rect-set-y (:viewport viewport) y))
