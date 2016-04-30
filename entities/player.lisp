@@ -4,22 +4,22 @@
 ;;    :with (printz ces/component::animation))
 
 (ces/entity::def-entity player
-    :with (components::printz ces/component::animation components::viewport))
+    :with (ces/component::animation components::viewport ces/component::collider-rect ces/component::physics))
 
 (defmethod initialize-instance :after
     ((player player)
-     &key statement animation-name)
+     &key)
   t)
 
 (ces/entity::def-system :swap-animation
     player scene
-  (cond ((or (game-utilities/event-manager::key-down? :a (:event-manager scene))
-	     (game-utilities/event-manager::key-down? :d (:event-manager scene)))
+  (cond ((or (key-down? :a)
+	     (key-down? :d))
 	 (setf (:animation-name player) :human-run))
 
 	;;all movement type keys have been released, reset all timers on animations.
-	((or (game-utilities/event-manager::key-released? :a (:event-manager scene))
-	     (game-utilities/event-manager::key-released? :d (:event-manager scene)))
+	((or (key-released? :a)
+	     (key-released? :d))
 	 (progn
 	   ;;(print "reset animation")
 	   (setf (:animation-name player) :human-idle)
@@ -31,13 +31,21 @@
 
 (ces/entity::def-system :run
     player scene
-  (let* ((run-speed 6)
-	 (rect (:viewport player)))
-    (if (game-utilities/event-manager::key-down? :d (:event-manager scene))
-	(sdl::rect-set-x rect (+ (* 1 run-speed) (sdl::rect-get-x rect))))
-    (if (game-utilities/event-manager::key-down? :a (:event-manager scene))
-	(sdl::rect-set-x rect (+ (* -1 run-speed) (sdl::rect-get-x rect))))
-    (if (game-utilities/event-manager::key-down? :w (:event-manager scene))
-	(sdl::rect-set-y rect (+ (* -1 run-speed) (sdl::rect-get-y rect))))
-    (if (game-utilities/event-manager::key-down? :s (:event-manager scene))
-	(sdl::rect-set-y rect (+ (* 1 run-speed) (sdl::rect-get-y rect))))))
+    (let* ((h-run-speed 6)
+	   (v-run-speed 6)
+	   (rect (:collider-rect player)))
+      (if (key-down? :d)
+	  (sdl::rect-set-x rect (+ (* 1 h-run-speed) (sdl::rect-get-x rect))))
+      (if (key-down? :a)
+	  (sdl::rect-set-x rect (+ (* -1 h-run-speed) (sdl::rect-get-x rect))))
+      (if (key-down? :w)
+	  (sdl::rect-set-y rect (+ (* -1 v-run-speed) (sdl::rect-get-y rect))))
+      (if (key-down? :s)
+	  (sdl::rect-set-y rect (+ (* 1 v-run-speed) (sdl::rect-get-y rect))))))
+
+(ces/entity::def-system :follow-mouse
+    player scene
+    (let* ((rect (:collider-rect player))
+	   (mx (nth 0 (mouse-coordinate)))
+	   (my (nth 1 (mouse-coordinate))))
+      (sdl::rect-set-position rect mx my)))

@@ -1,0 +1,9 @@
+(in-package :entities)
+
+(ces/entity::def-entity static-animated-tile
+    :with (ces/component::animation components::viewport ces/component::collider-rect))
+
+(defmethod initialize-instance :after
+    ((tile static-tile)
+     &key)
+  t)

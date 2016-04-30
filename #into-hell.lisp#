@@ -62,6 +62,10 @@
 				   (list n1 n2)
 				   (list '(0 0 255 255) '(150 0 150 255))))))
 
+
+
+    
+
     (let* ((static-tiles (loop for entity across (:entities scene)
 			    when (eq (:tag entity) :static-tile)
 			    collect entity)))

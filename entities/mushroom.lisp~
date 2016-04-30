@@ -1,8 +1,0 @@
-(in-package :entities)
-
-(def-class mushroom :slots ((b 2)) :with (components::printz ces/component::animation components::viewport ces/entity::entity))
-
-(defmethod initialize-instance :after
-    ((mushroom mushroom)
-     &key statement animation-name)
-  t)
