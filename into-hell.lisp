@@ -13,7 +13,7 @@
 	(ces/da::quit scene))
       ;;else
       (progn
-	(ces/component::build-quad-tree scene)
+	;;(ces/component::build-quad-tree scene)
 	(ces/da::update scene))))
 
 ;;;;render
@@ -62,12 +62,34 @@
 				   (list n1 n2)
 				   (list '(0 0 255 255) '(150 0 150 255))))))
 
-    (let* ((static-tiles (loop for entity across (:entities scene)
-			    when (eq (:tag entity) :static-tile)
-			    collect entity)))
 
-      (ces/component::resolve-dynamic scene (ces/da::find-entity scene :player) (map 'vector #'identity static-tiles))
-      )
+
+    (ces/component::rebuild-quadtree scene)
+    (let* ((player (ces/da::find-entity scene :player))
+	   (dir (ces/component::get-collider-direction player))
+	   (qt-sorted (ces/component::sort-quadtree-segment (remove player
+								    (:quadtree scene))
+							    dir)))
+      (print (to-string "DIR: " dir))
+      (ces/component::resolve-dynamic scene
+				      player
+				      qt-sorted)
+
+      ;;visual debug qt-sort
+      (let* ((rects (loop for e across qt-sorted
+		       collect (:collider-rect e)))
+	     (colors (loop
+			for c upto (- (length rects) 1)
+			for x = 255 then (- x 20)
+			collect (list x 0 0 255))))
+	(sdl::draw-rects-INGAME scene (:rect (ces/da::direct-reference scene :camera)) rects colors :type :fill)
+	))
+    
+    ;;(let* ((static-tiles (loop for entity across (:entities scene)
+    ;;			    when (eq (:tag entity) :static-tile)
+    ;;			    collect entity)))
+    ;;
+    ;;  (ces/component::resolve-dynamic scene (ces/da::find-entity scene :player) (map 'vector #'identity static-tiles)))
     
     ;;(ces/component::resolve-dynamic scene (ces/da::find-entity scene :player) (make-vector (ces/da::find-entity scene :static-tile)))
     ))
@@ -185,6 +207,48 @@
 					:render-order 1
 					:tag :static-tile
 					:collider (sdl::new-rect 684 250 128 128)))
+	   (static-tile5 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 812 250 128 128)))
+	   (static-tile6 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 122 128 128)))
+	   (static-tile7 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 -6 128 128)))
+	   (static-tile8 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 -138 128 128)))
+	   (static-tile9 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 -262 128 128)))
+	   (static-tile10 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 -390 128 128)))
+	   (static-tile11 (make-instance 'entities::static-tile
+					:sprite-name :grass-stand-alone
+					:viewport-x 0 :viewport-y 0
+					:render-order 1
+					:tag :static-tile
+					:collider (sdl::new-rect 684 378 128 128)))
 	   (bat (make-instance 'entities::bat
 			       :animation-name :bat-fly
 			       :viewport-x 100 :viewport-y 0
@@ -197,7 +261,10 @@
 
       ;;;;TODO directly attaching an entity to scene
       ;;;;this should be handled automatically. (Or should it???)
-      (ces/da::attach-entities scene camera player static-tile1 static-tile2 static-tile3 static-tile4 bat (make-instance 'entities::add-remove))
+      (ces/da::attach-entities scene camera player
+			       static-tile1 static-tile2 static-tile3 static-tile4 static-tile5
+			       static-tile6 static-tile7 static-tile8 static-tile9 static-tile10 static-tile11
+			       bat (make-instance 'entities::add-remove))
 
       ;;attach camera object to scene's direct-reference map.
       (ces/da::new-direct-reference scene camera :camera)
